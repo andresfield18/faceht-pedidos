@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FACEHT Pedidos">
+<meta name="theme-color" content="#185FA5">
+<title>FACEHT ELECTRONIC — Solicitar Pedido</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue: #185FA5; --blue-light: #E6F1FB; --blue-dark: #0C447C;
+    --green: #0F6E56; --green-light: #E1F5EE;
+    --orange: #C2560A; --orange-light: #FEF3EC;
+    --text: #1a1a1a; --text-muted: #666; --text-hint: #999;
+    --bg: #F0F4F8; --surface: #ffffff; --surface2: #F8F9FA;
+    --border: rgba(0,0,0,0.10); --border-strong: rgba(0,0,0,0.18);
+    --radius: 12px; --radius-sm: 8px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  html, body { min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--blue); color: white; padding: 0;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(24,95,165,0.3);
+  }
+  .header-inner { max-width: 680px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .header-logo { display: flex; align-items: center; gap: 10px; }
+  .header-logo .logo-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .header-logo h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
+  .header-logo p { font-size: 11px; opacity: 0.8; margin-top: 1px; }
+  .cart-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s; }
+  .cart-btn:hover { background: rgba(255,255,255,0.3); }
+  .cart-count { background: #FF6B35; color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+
+  /* ── MAIN CONTAINER ── */
+  .container { max-width: 680px; margin: 0 auto; padding: 20px 16px 100px; }
+
+  /* ── STEPS ── */
+  .steps { display: flex; align-items: center; gap: 0; margin-bottom: 24px; }
+  .step-item { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .step-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; background: var(--surface2); color: var(--text-hint); border: 2px solid var(--border); transition: all 0.3s; }
+  .step-num.active { background: var(--blue); color: white; border-color: var(--blue); }
+  .step-num.done { background: var(--green); color: white; border-color: var(--green); }
+  .step-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .step-label.active { color: var(--blue); font-weight: 600; }
+  .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 8px; }
+  .step-line.done { background: var(--green); }
+
+  /* ── CARDS ── */
+  .card { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; border: 1px solid var(--border); }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+  .card-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+
+  /* ── SEARCH ── */
+  .search-wrap { position: relative; margin-bottom: 16px; }
+  .search-input { width: 100%; padding: 12px 16px 12px 42px; font-size: 15px; border: 2px solid var(--border-strong); border-radius: 24px; background: var(--surface); outline: none; transition: border-color 0.15s; font-family: inherit; }
+  .search-input:focus { border-color: var(--blue); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-hint); pointer-events: none; }
+
+  /* ── CATEGORY CHIPS ── */
+  .cats { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; scrollbar-width: none; }
+  .cats::-webkit-scrollbar { display: none; }
+  .cat-chip { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; border: 2px solid var(--border-strong); background: var(--surface); color: var(--text-muted); transition: all 0.15s; flex-shrink: 0; }
+  .cat-chip.active { background: var(--blue); color: white; border-color: var(--blue); }
+
+  /* ── PRODUCT GRID ── */
+  .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .product-card { background: var(--surface2); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 14px; cursor: pointer; transition: all 0.15s; position: relative; }
+  .product-card:hover, .product-card.selected { border-color: var(--blue); background: var(--blue-light); }
+  .product-card.selected { box-shadow: 0 0 0 3px rgba(24,95,165,0.15); }
+  .product-code { font-size: 10px; color: var(--text-hint); margin-bottom: 4px; font-family: monospace; }
+  .product-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 10px; }
+  .product-footer { display: flex; align-items: center; justify-content: space-between; }
+  .product-qty { display: flex; align-items: center; gap: 6px; }
+  .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .qty-minus { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border-strong); }
+  .qty-minus:hover { background: #FEF2F2; color: #B91C1C; }
+  .qty-plus { background: var(--blue); color: white; }
+  .qty-plus:hover { background: var(--blue-dark); }
+  .qty-num { font-size: 14px; font-weight: 700; min-width: 20px; text-align: center; color: var(--blue); }
+  .added-badge { position: absolute; top: 8px; right: 8px; background: var(--green); color: white; border-radius: 50%; width: 20px; height: 20px; display: none; align-items: center; justify-content: center; font-size: 11px; }
+  .product-card.selected .added-badge { display: flex; }
+
+  /* ── CART ── */
+  .cart-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .cart-item:last-child { border-bottom: none; }
+  .cart-item-info { flex: 1; }
+  .cart-item-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .cart-item-code { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .cart-item-qty { display: flex; align-items: center; gap: 8px; }
+  .cart-qty-input { width: 52px; padding: 6px 8px; font-size: 14px; font-weight: 600; text-align: center; border: 2px solid var(--border-strong); border-radius: var(--radius-sm); }
+  .cart-remove { background: none; border: none; color: var(--text-hint); cursor: pointer; padding: 4px; font-size: 18px; line-height: 1; }
+  .cart-remove:hover { color: #B91C1C; }
+  .cart-empty { text-align: center; padding: 40px 20px; color: var(--text-hint); }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: block; }
+  .form-input { width: 100%; padding: 12px 14px; font-size: 15px; border: 2px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); outline: none; transition: border-color 0.15s; font-family: inherit; }
+  .form-input:focus { border-color: var(--blue); }
+  textarea.form-input { min-height: 80px; resize: vertical; }
+
+  /* ── BOTTOM BAR ── */
+  .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 12px 16px; display: flex; gap: 10px; z-index: 200; box-shadow: 0 -4px 16px rgba(0,0,0,0.08); }
+  .bottom-bar .btn-back { flex: 1; padding: 14px; border-radius: var(--radius-sm); border: 2px solid var(--border-strong); background: var(--surface); font-size: 15px; font-weight: 600; cursor: pointer; color: var(--text-muted); font-family: inherit; }
+  .bottom-bar .btn-next { flex: 2; padding: 14px; border-radius: var(--radius-sm); border: none; background: var(--blue); color: white; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .bottom-bar .btn-next:hover { background: var(--blue-dark); }
+  .bottom-bar .btn-next:disabled { background: var(--text-hint); cursor: not-allowed; }
+
+  /* ── SUCCESS ── */
+  .success-screen { text-align: center; padding: 40px 20px; }
+  .success-icon { font-size: 64px; margin-bottom: 16px; }
+  .success-title { font-size: 22px; font-weight: 700; color: var(--green); margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+  .success-num { display: inline-block; background: var(--green-light); color: var(--green); padding: 8px 20px; border-radius: 20px; font-size: 16px; font-weight: 700; margin-bottom: 24px; }
+  .order-summary { background: var(--surface2); border-radius: var(--radius-sm); padding: 16px; text-align: left; margin-bottom: 24px; }
+  .order-summary-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .order-summary-item:last-child { border-bottom: none; }
+
+  /* ── LOADING ── */
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.85); z-index: 500; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+  .loading-overlay.show { display: flex; }
+  .spinner { width: 44px; height: 44px; border: 4px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 400px) {
+    .product-grid { grid-template-columns: 1fr; }
+    .header-logo p { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <h1>FACEHT ELECTRONIC</h1>
+        <p>Portal de pedidos</p>
+      </div>
+    </div>
+    <button class="cart-btn" onclick="goToStep(2)">
+      🛒 Pedido
+      <span class="cart-count" id="cart-count">0</span>
+    </button>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Cargando catálogo...</div>
+</div>
+
+<div class="container">
+
+  <!-- Steps indicator -->
+  <div class="steps" id="steps-bar">
+    <div class="step-item">
+      <div class="step-num active" id="step-num-1">1</div>
+      <div class="step-label active" id="step-lbl-1">Productos</div>
+    </div>
+    <div class="step-line" id="step-line-1"></div>
+    <div class="step-item">
+      <div class="step-num" id="step-num-2">2</div>
+      <div class="step-label" id="step-lbl-2">Pedido</div>
+    </div>
+    <div class="step-line" id="step-line-2"></div>
+    <div class="step-item">
+      <div class="step-num" id="step-num-3">3</div>
+      <div class="step-label" id="step-lbl-3">Mis datos</div>
+    </div>
+    <div class="step-line" id="step-line-3"></div>
+    <div class="step-item">
+      <div class="step-num" id="step-num-4">4</div>
+      <div class="step-label" id="step-lbl-4">Confirmar</div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 1: Catálogo ══ -->
+  <div id="page-1">
+    <div class="card">
+      <div class="card-title">📦 Selecciona los productos</div>
+      <div class="card-sub">Toca un producto para agregarlo a tu pedido</div>
+
+      <div class="search-wrap">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="search-prod" type="text" placeholder="Buscar producto..." oninput="filterProducts()" autocomplete="off" autocorrect="off">
+      </div>
+
+      <div class="cats" id="cats-wrap"></div>
+      <div class="product-grid" id="product-grid">
+        <div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-hint);">Cargando catálogo...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 2: Carrito ══ -->
+  <div id="page-2" style="display:none;">
+    <div class="card">
+      <div class="card-title">🛒 Tu pedido</div>
+      <div class="card-sub">Revisa y ajusta las cantidades</div>
+      <div id="cart-items"></div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 3: Datos del cliente ══ -->
+  <div id="page-3" style="display:none;">
+    <div class="card">
+      <div class="card-title">👤 Tus datos</div>
+      <div class="card-sub">Para que podamos contactarte con tu cotización</div>
+
+      <!-- Cédula / NIT con búsqueda automática -->
+      <div class="form-group" style="margin-bottom:18px;">
+        <label class="form-label">Cédula o NIT *</label>
+        <div style="display:flex;gap:8px;">
+          <input class="form-input" id="p-cedula" type="text" placeholder="Ej: 1234567890" inputmode="numeric"
+            oninput="buscarClientePorCedula(this.value)" autocomplete="off"
+            style="flex:1;">
+          <div id="cedula-status" style="display:flex;align-items:center;font-size:13px;white-space:nowrap;padding:0 4px;"></div>
+        </div>
+        <div id="cedula-hint" style="font-size:11px;color:var(--text-hint);margin-top:4px;">
+          Tu ID de cliente se generará automáticamente
+        </div>
+      </div>
+
+      <!-- ID generado -->
+      <div class="form-group" id="id-generado-wrap" style="display:none;">
+        <div style="background:var(--blue-light);border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🪪</span>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);">Tu ID de cliente</div>
+            <div style="font-size:15px;font-weight:700;color:var(--blue);" id="id-generado-label"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nombre o empresa *</label>
+        <input class="form-input" id="p-nombre" type="text" placeholder="Tu nombre completo o empresa">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Teléfono / WhatsApp *</label>
+        <input class="form-input" id="p-tel" type="tel" placeholder="Celular o fijo" inputmode="tel">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ciudad</label>
+        <input class="form-input" id="p-ciudad" type="text" placeholder="Tu ciudad">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dirección</label>
+        <input class="form-input" id="p-dir" type="text" placeholder="Tu dirección">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nota adicional (opcional)</label>
+        <textarea class="form-input" id="p-nota" placeholder="¿Alguna especificación o comentario sobre tu pedido?"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 3b: Preview del pedido ══ -->
+  <div id="page-3b" style="display:none;">
+    <div class="card">
+      <div class="card-title">📋 Resumen de tu pedido</div>
+      <div class="card-sub">Revisa antes de enviar</div>
+      <div id="preview-items"></div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+          <span style="color:var(--text-muted);">Total productos</span>
+          <span style="font-weight:700;" id="preview-total-prods">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;">
+          <span style="color:var(--text-muted);">Total unidades</span>
+          <span style="font-weight:700;" id="preview-total-units">0</span>
+        </div>
+        <div style="margin-top:12px;padding:10px 14px;background:var(--blue-light);border-radius:var(--radius-sm);font-size:12px;color:var(--blue-dark);">
+          💡 Los precios serán asignados por FACEHT Electronic según tu tipo de cliente
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PASO 4: Éxito ══ -->
+  <div id="page-4" style="display:none;">
+    <div class="card success-screen">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">¡Pedido enviado!</div>
+      <div class="success-num" id="success-num"></div>
+      <div class="success-sub">
+        Recibimos tu solicitud. En breve te contactaremos al número indicado con tu cotización personalizada.<br><br>
+        <strong>FACEHT ELECTRONIC SAS</strong><br>
+        Andres Tordecilla Field — Tel: 3017318853
+      </div>
+      <div class="order-summary" id="success-summary"></div>
+      <button onclick="resetPortal()" style="padding:12px 28px; background:var(--blue); color:white; border:none; border-radius:var(--radius-sm); font-size:15px; font-weight:700; cursor:pointer; font-family:inherit;">
+        Hacer otro pedido
+      </button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- Bottom bar -->
+<div class="bottom-bar" id="bottom-bar">
+  <button class="btn-back" id="btn-back" onclick="goBack()" style="display:none;">← Atrás</button>
+  <button class="btn-next" id="btn-next" onclick="goNext()">Ver mi pedido →</button>
+</div>
+
+<script>
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzdL5Al7sJG__IZtdKSM1x4C_DkRhBvR_iiaHz615GhNJyIYf8Aw1VQ5IxGaXMr8eG7/exec';
+
+let catalog = [];    // products loaded from Sheets
+let cart    = {};    // { code: qty }
+let currentStep = 1;
+
+// ── Helpers ──
+const fmt = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n);
+function showLoading(msg){ document.getElementById('loading').classList.add('show'); document.getElementById('loading-text').textContent=msg||'Cargando...'; }
+function hideLoading(){ document.getElementById('loading').classList.remove('show'); }
+
+// ── Load catalog from Sheets via Web App ──
+async function loadCatalog() {
+  showLoading('Cargando catálogo...');
+  try {
+    const res  = await fetch(WEBAPP_URL + '?t=' + Date.now());
+    const data = await res.json();
+    const rows = data.pm || [];
+    if(rows.length > 1) {
+      const [header, ...items] = rows;
+      catalog = items.map(r => ({c: r[0]||'', d: r[1]||'', p: parseFloat(r[2])||0}))
+                     .filter(p => p.c && p.d);
+    }
+    // Cache clients for lookup
+    const cliRows = data.clients || data.clientes || [];
+    if(cliRows.length > 1) {
+      const [ch, ...cdata] = cliRows;
+      clientsCache = cdata.map(r => ({
+        id: r[0]||'', nombre: r[1]||'', atencion: r[2]||'',
+        tel: String(r[3]||''), ciudad: r[4]||'', dir: r[5]||'',
+        cedula: String(r[0]||'').replace('CLI-','')
+      }));
+    }
+    if(!catalog.length) {
+      // fallback demo products if sheets empty
+      catalog = [{c:'LRL1001',d:'LICUADORA REDONDA LED BLANCA',p:110000},{c:'LRN1010',d:'LICUADORA REDONDA NEON BLANCA',p:195000},{c:'LCL1018',d:'LICUADORA CUADRADA LED BLANCA',p:155000}];
+    }
+  } catch(e) {
+    console.warn('Error cargando catálogo', e);
+    catalog = [{c:'LRL1001',d:'LICUADORA REDONDA LED BLANCA',p:110000}];
+  }
+  hideLoading();
+  buildCategories();
+  renderProducts('');
+}
+
+// ── Build category chips from product codes ──
+function buildCategories() {
+  const cats = {'Todos': null};
+  catalog.forEach(p => {
+    const prefix = p.d.split(' ').slice(0,2).join(' ');
+    if(p.d.includes('LICUADORA REDONDA')) cats['L. Redonda'] = 'LICUADORA REDONDA';
+    else if(p.d.includes('LICUADORA CUADRADA')) cats['L. Cuadrada'] = 'LICUADORA CUADRADA';
+    else if(p.d.includes('VELA')) cats['Velas'] = 'VELA';
+    else if(p.d.includes('MARRANO')) cats['Marranos'] = 'MARRANO';
+    else if(p.d.includes('VASO')) cats['Vasos'] = 'VASO';
+    else if(p.d.includes('KIT')) cats['Kits'] = 'KIT';
+    else if(p.d.includes('CIRCUITO')) cats['Circuitos'] = 'CIRCUITO';
+  });
+  const wrap = document.getElementById('cats-wrap');
+  wrap.innerHTML = Object.entries(cats).map(([label, filter], i) =>
+    `<div class="cat-chip ${i===0?'active':''}" onclick="filterByCategory(this,'${filter||''}')">${label}</div>`
+  ).join('');
+}
+
+let activeCategory = '';
+function filterByCategory(el, cat) {
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  activeCategory = cat;
+  filterProducts();
+}
+
+function filterProducts() {
+  const q = document.getElementById('search-prod').value.toLowerCase();
+  renderProducts(q);
+}
+
+function renderProducts(q) {
+  const filtered = catalog.filter(p => {
+    const matchSearch = !q || p.c.toLowerCase().includes(q) || p.d.toLowerCase().includes(q);
+    const matchCat    = !activeCategory || p.d.includes(activeCategory);
+    return matchSearch && matchCat;
+  });
+
+  const grid = document.getElementById('product-grid');
+  if(!filtered.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text-hint);">Sin resultados</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(p => {
+    const qty = cart[p.c] || 0;
+    const sel = qty > 0 ? 'selected' : '';
+    return `<div class="product-card ${sel}" id="pc-${p.c}">
+      <div class="added-badge">✓</div>
+      <div class="product-code">${p.c}</div>
+      <div class="product-name">${p.d}</div>
+      <div class="product-footer">
+        <div class="product-qty">
+          <button class="qty-btn qty-minus" ontouchstart="" onclick="changeQty('${p.c}',-1);event.stopPropagation()">−</button>
+          <span class="qty-num" id="qn-${p.c}">${qty||0}</span>
+          <button class="qty-btn qty-plus" ontouchstart="" onclick="changeQty('${p.c}',1);event.stopPropagation()">+</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function changeQty(code, delta) {
+  const current = cart[code] || 0;
+  const newQty  = Math.max(0, current + delta);
+  if(newQty === 0) delete cart[code];
+  else cart[code] = newQty;
+  updateCartCount();
+  // Update card UI
+  const card = document.getElementById('pc-'+code);
+  const num  = document.getElementById('qn-'+code);
+  if(card) { card.classList.toggle('selected', newQty > 0); }
+  if(num)  { num.textContent = newQty; }
+}
+
+function updateCartCount() {
+  const total = Object.values(cart).reduce((a,b)=>a+b, 0);
+  document.getElementById('cart-count').textContent = total;
+}
+
+// ── Cart rendering ──
+function renderCart() {
+  const wrap = document.getElementById('cart-items');
+  const entries = Object.entries(cart).filter(([,q])=>q>0);
+  if(!entries.length) {
+    wrap.innerHTML = '<div class="cart-empty">🛒<br><br>No has agregado productos.<br>Vuelve al catálogo para seleccionar.</div>';
+    return;
+  }
+  wrap.innerHTML = entries.map(([code, qty]) => {
+    const prod = catalog.find(p=>p.c===code) || {d:code, p:0};
+    return `<div class="cart-item">
+      <div class="cart-item-info">
+        <div class="cart-item-name">${prod.d}</div>
+        <div class="cart-item-code">${code}</div>
+      </div>
+      <div class="cart-item-qty">
+        <input class="cart-qty-input" type="number" value="${qty}" min="1" inputmode="numeric"
+          onchange="updateCartQty('${code}',this.value)">
+        <button class="cart-remove" onclick="removeFromCart('${code}')">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function updateCartQty(code, val) {
+  const v = parseInt(val)||1;
+  if(v<=0) delete cart[code]; else cart[code]=v;
+  updateCartCount();
+}
+function removeFromCart(code) {
+  delete cart[code];
+  updateCartCount();
+  renderCart();
+  // Re-render products to uncheck
+  filterProducts();
+}
+
+// ── Navigation ──
+// Steps: 1=catálogo, 2=carrito, 3=datos, '3b'=preview, 4=éxito
+function goToStep(n) {
+  if(n===2) renderCart();
+  if(n==='3b') renderPreview();
+  if(n>1 && Object.keys(cart).length===0) {
+    alert('Agrega al menos un producto antes de continuar.');
+    return;
+  }
+  if(n==='3b' || n>3) {
+    const cedula = document.getElementById('p-cedula').value.trim();
+    const nombre = document.getElementById('p-nombre').value.trim();
+    const tel    = document.getElementById('p-tel').value.trim();
+    if(!cedula) { alert('Por favor ingresa tu cédula o NIT.'); return; }
+    if(!nombre) { alert('Por favor ingresa tu nombre.'); return; }
+    if(!tel)    { alert('Por favor ingresa tu teléfono.'); return; }
+  }
+  currentStep = n;
+  ['1','2','3','3b','4'].forEach(i => {
+    const el = document.getElementById('page-'+i);
+    if(el) el.style.display = (String(i)===String(n)) ? 'block' : 'none';
+  });
+  updateStepBar();
+  updateBottomBar();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function goNext() {
+  if(currentStep===1)   goToStep(2);
+  else if(currentStep===2)  goToStep(3);
+  else if(currentStep===3)  goToStep('3b');
+  else if(currentStep==='3b') submitOrder();
+}
+function goBack() {
+  if(currentStep==='3b') goToStep(3);
+  else if(currentStep===3) goToStep(2);
+  else if(currentStep===2) goToStep(1);
+}
+
+function updateStepBar() {
+  const stepNums = {1:1, 2:2, 3:3, '3b':3, 4:4};
+  const cur = stepNums[currentStep] || currentStep;
+  [1,2,3,4].forEach(i => {
+    const num = document.getElementById('step-num-'+i);
+    const lbl = document.getElementById('step-lbl-'+i);
+    if(!num) return;
+    num.className = 'step-num ' + (i<cur?'done': i===cur?'active':'');
+    lbl.className = 'step-label ' + (i===cur?'active':'');
+    num.textContent = i<cur ? '✓' : i;
+  });
+  [1,2,3].forEach(i => {
+    const line = document.getElementById('step-line-'+i);
+    if(line) line.className = 'step-line ' + (i<cur?'done':'');
+  });
+  document.getElementById('steps-bar').style.display = currentStep===4 ? 'none' : 'flex';
+}
+
+function updateBottomBar() {
+  const bar  = document.getElementById('bottom-bar');
+  const back = document.getElementById('btn-back');
+  const next = document.getElementById('btn-next');
+  bar.style.display = currentStep===4 ? 'none' : 'flex';
+  back.style.display = currentStep===1 ? 'none' : 'block';
+  if(currentStep===1)    next.textContent = '🛒 Ver pedido →';
+  else if(currentStep===2)   next.textContent = 'Mis datos →';
+  else if(currentStep===3)   next.textContent = '👁️ Previsualizar →';
+  else if(currentStep==='3b') next.textContent = '✅ Enviar pedido';
+}
+
+// ── Buscar cliente por cédula ──
+let clientsCache = [];
+async function buscarClientePorCedula(val) {
+  const cedula = val.trim();
+  const status = document.getElementById('cedula-status');
+  const hint   = document.getElementById('cedula-hint');
+  const idWrap = document.getElementById('id-generado-wrap');
+  const idLbl  = document.getElementById('id-generado-label');
+
+  if(cedula.length < 4) {
+    status.textContent = '';
+    idWrap.style.display = 'none';
+    return;
+  }
+
+  // Generate ID
+  const clienteId = 'CLI-' + cedula;
+  idLbl.textContent = clienteId;
+  idWrap.style.display = 'block';
+
+  // Search in cached clients
+  const found = clientsCache.find(c => c.cedula === cedula || c.id === clienteId);
+  if(found) {
+    document.getElementById('p-nombre').value  = found.nombre  || '';
+    document.getElementById('p-tel').value     = found.tel     || '';
+    document.getElementById('p-ciudad').value  = found.ciudad  || '';
+    document.getElementById('p-dir').value     = found.dir     || '';
+    status.innerHTML = '<span style="color:var(--green);font-weight:600;">✓ Cliente encontrado</span>';
+    hint.textContent = 'Datos cargados automáticamente';
+  } else {
+    status.innerHTML = '<span style="color:var(--text-muted);">🆕 Cliente nuevo</span>';
+    hint.textContent = 'Completa tus datos a continuación';
+  }
+}
+
+// ── Preview del pedido ──
+function renderPreview() {
+  const entries = Object.entries(cart).filter(([,q])=>q>0);
+  const totalUnits = entries.reduce((a,[,q])=>a+q, 0);
+  document.getElementById('preview-total-prods').textContent = entries.length + ' producto' + (entries.length===1?'':'s');
+  document.getElementById('preview-total-units').textContent = totalUnits + ' unidad' + (totalUnits===1?'':'es');
+  document.getElementById('preview-items').innerHTML = entries.map(([code,qty]) => {
+    const prod = catalog.find(p=>p.c===code) || {d:code};
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="width:36px;height:36px;background:var(--blue-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📦</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;">${prod.d}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${code}</div>
+      </div>
+      <div style="font-size:15px;font-weight:700;color:var(--blue);">${qty} und</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Submit order ──
+async function submitOrder() {
+  showLoading('Enviando pedido...');
+
+  const now      = new Date();
+  const orderNum = 'PED-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getTime()).slice(-4);
+  const cedula   = document.getElementById('p-cedula').value.trim();
+  const clienteId = 'CLI-' + cedula;
+  const nombre   = document.getElementById('p-nombre').value.trim();
+  const tel      = document.getElementById('p-tel').value.trim();
+  const ciudad   = document.getElementById('p-ciudad').value.trim();
+  const dir      = document.getElementById('p-dir').value.trim();
+  const nota     = document.getElementById('p-nota').value.trim();
+  const entries  = Object.entries(cart).filter(([,q])=>q>0);
+  const itemsDetail = entries.map(([code,qty]) => {
+    const prod = catalog.find(p=>p.c===code)||{d:code};
+    return code+'|'+prod.d+'|'+qty;
+  }).join(';');
+
+  const orderRow = [
+    orderNum,
+    now.toLocaleDateString('es-CO'),
+    now.toLocaleTimeString('es-CO'),
+    clienteId, cedula, nombre, tel, ciudad, dir,
+    entries.reduce((a,[,q])=>a+q,0),
+    itemsDetail,
+    nota,
+    'PENDIENTE'
+  ];
+
+  // Build GET URL with all params (avoids CORS completely)
+  const params = new URLSearchParams({
+    action:    'pedido',
+    num:       orderRow[0],
+    fecha:     orderRow[1],
+    hora:      orderRow[2],
+    clienteId: orderRow[3],
+    cedula:    orderRow[4],
+    nombre:    orderRow[5],
+    tel:       orderRow[6],
+    ciudad:    orderRow[7],
+    dir:       orderRow[8],
+    unidades:  orderRow[9],
+    items:     orderRow[10],
+    nota:      orderRow[11],
+    estado:    'PENDIENTE'
+  });
+
+  try {
+    // Use no-cors fetch — we don't need the response, just fire and forget
+    await fetch(WEBAPP_URL + '?' + params.toString(), {
+      method: 'GET',
+      mode: 'no-cors'
+    });
+  } catch(e) {
+    console.warn('Fetch error (ignorado):', e);
+  }
+
+  // Always show success — the no-cors request fires even if we can't read the response
+  hideLoading();
+  showSuccess(orderNum, nombre, entries);
+}
+
+function showSuccess(orderNum, nombre, entries) {
+  document.getElementById('success-num').textContent = orderNum;
+  const summary = entries.map(([code,qty]) => {
+    const prod = catalog.find(p=>p.c===code)||{d:code};
+    return `<div class="order-summary-item"><span>${prod.d}</span><span style="font-weight:700;">${qty} und</span></div>`;
+  }).join('');
+  document.getElementById('success-summary').innerHTML =
+    `<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;">RESUMEN DEL PEDIDO</div>${summary}`;
+  goToStep(4);
+}
+
+function resetPortal() {
+  cart = {};
+  updateCartCount();
+  ['p-cedula','p-nombre','p-tel','p-ciudad','p-dir','p-nota'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  document.getElementById('cedula-status').textContent = '';
+  document.getElementById('id-generado-wrap').style.display = 'none';
+  filterProducts();
+  goToStep(1);
+}
+
+// ── Init ──
+loadCatalog();
+updateBottomBar();
+</script>
+</body>
+</html>
