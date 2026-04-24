@@ -259,7 +259,7 @@
 </div>
 
 <script>
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwX-MfnLnXWykpO4Cqzrqne1dY1bqaDNPAD0QXDGtt_G_LGQJVP2VZsibnZBKSKUe1v/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzdL5Al7sJG__IZtdKSM1x4C_DkRhBvR_iiaHz615GhNJyIYf8Aw1VQ5IxGaXMr8eG7/exec';
 
 let catalog = [];    // products loaded from Sheets
 let cart    = {};    // { code: qty }
@@ -471,46 +471,58 @@ function updateBottomBar() {
 // ── Submit order ──
 async function submitOrder() {
   showLoading('Enviando pedido...');
+
+  const now      = new Date();
+  const orderNum = 'PED-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getTime()).slice(-4);
+  const nombre   = document.getElementById('p-nombre').value.trim();
+  const tel      = document.getElementById('p-tel').value.trim();
+  const ciudad   = document.getElementById('p-ciudad').value.trim();
+  const nota     = document.getElementById('p-nota').value.trim();
+  const entries  = Object.entries(cart).filter(([,q])=>q>0);
+  const itemsDetail = entries.map(([code,qty]) => {
+    const prod = catalog.find(p=>p.c===code)||{d:code};
+    return code+'|'+prod.d+'|'+qty;
+  }).join(';');
+
+  const orderRow = [
+    orderNum,
+    now.toLocaleDateString('es-CO'),
+    now.toLocaleTimeString('es-CO'),
+    nombre, tel, ciudad,
+    entries.reduce((a,[,q])=>a+q,0),
+    itemsDetail,
+    nota,
+    'PENDIENTE'
+  ];
+
+  // Build GET URL with all params (avoids CORS completely)
+  const params = new URLSearchParams({
+    action:   'pedido',
+    num:      orderRow[0],
+    fecha:    orderRow[1],
+    hora:     orderRow[2],
+    nombre:   orderRow[3],
+    tel:      orderRow[4],
+    ciudad:   orderRow[5],
+    unidades: orderRow[6],
+    items:    orderRow[7],
+    nota:     orderRow[8],
+    estado:   'PENDIENTE'
+  });
+
   try {
-    const now     = new Date();
-    const orderNum = 'PED-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getTime()).slice(-4);
-    const nombre  = document.getElementById('p-nombre').value.trim();
-    const tel     = document.getElementById('p-tel').value.trim();
-    const ciudad  = document.getElementById('p-ciudad').value.trim();
-    const nota    = document.getElementById('p-nota').value.trim();
-    const entries = Object.entries(cart).filter(([,q])=>q>0);
-    const itemsDetail = entries.map(([code,qty]) => {
-      const prod = catalog.find(p=>p.c===code)||{d:code};
-      return code+'|'+prod.d+'|'+qty;
-    }).join(';');
-
-    const orderRow = [
-      orderNum,
-      now.toLocaleDateString('es-CO'),
-      now.toLocaleTimeString('es-CO'),
-      nombre, tel, ciudad,
-      entries.reduce((a,[,q])=>a+q,0),
-      itemsDetail,
-      nota,
-      'PENDIENTE'
-    ];
-
-    // Send to Sheets
-    await fetch(WEBAPP_URL, {
-      method: 'POST',
-      body: JSON.stringify({ pedido: orderRow })
+    // Use no-cors fetch — we don't need the response, just fire and forget
+    await fetch(WEBAPP_URL + '?' + params.toString(), {
+      method: 'GET',
+      mode: 'no-cors'
     });
-
-    hideLoading();
-    showSuccess(orderNum, nombre, entries);
   } catch(e) {
-    hideLoading();
-    // Show success anyway — order details shown to user
-    const now = new Date();
-    const orderNum = 'PED-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getTime()).slice(-4);
-    showSuccess(orderNum, document.getElementById('p-nombre').value.trim(), Object.entries(cart));
-    console.warn('Error enviando a Sheets:', e);
+    console.warn('Fetch error (ignorado):', e);
   }
+
+  // Always show success — the no-cors request fires even if we can't read the response
+  hideLoading();
+  showSuccess(orderNum, nombre, entries);
 }
 
 function showSuccess(orderNum, nombre, entries) {
